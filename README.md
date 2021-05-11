@@ -1,6 +1,6 @@
 **Status:** Archive (code is provided as-is, no updates expected)
 
-This code is based on code for Variational Information Maximizing Exploration (VIME) from github.com:openai/vime.git as presented in Curiosity-driven Exploration in Deep Reinforcement Learning via Bayesian Neural Networks by *R. Houthooft, X. Chen, Y. Duan, J. Schulman, F. De Turck, P. Abbeel* (http://arxiv.org/abs/1605.09674). 
+This code is based on [code](https://github.com/openai/vime) for Variational Information Maximizing Exploration (VIME) as presented in Curiosity-driven Exploration in Deep Reinforcement Learning via Bayesian Neural Networks by *R. Houthooft, X. Chen, Y. Duan, J. Schulman, F. De Turck, P. Abbeel* (http://arxiv.org/abs/1605.09674). 
 
 # How to run VASE
 
