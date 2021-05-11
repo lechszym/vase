@@ -1,12 +1,12 @@
 from rllab.misc import ext
 from rllab.misc.overrides import overrides
-from sandbox.vime.algos.batch_polopt_expl import BatchPolopt
+from sandbox.vase.algos.batch_polopt_expl import BatchPolopt
 import rllab.misc.logger as logger
 import theano
 import theano.tensor as TT
 from rllab.optimizers.penalty_lbfgs_optimizer import PenaltyLbfgsOptimizer
 
-
+import time
 class NPO(BatchPolopt):
     """
     Natural Policy Optimization.
@@ -28,6 +28,7 @@ class NPO(BatchPolopt):
 
     @overrides
     def init_opt(self):
+        self.start_time = time.time()
         is_recurrent = int(self.policy.recurrent)
         obs_var = self.env.observation_space.new_tensor_variable(
             'obs',
@@ -103,6 +104,7 @@ class NPO(BatchPolopt):
         self.optimizer.optimize(all_input_values)
         mean_kl = self.optimizer.constraint_val(all_input_values)
         loss_after = self.optimizer.loss(all_input_values)
+        logger.record_tabular('Time',time.time() - self.start_time)
         logger.record_tabular('LossAfter', loss_after)
         logger.record_tabular('MeanKL', mean_kl)
         logger.record_tabular('dLoss', loss_before - loss_after)
