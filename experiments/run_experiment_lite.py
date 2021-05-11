@@ -14,7 +14,7 @@ import datetime
 import dateutil.tz
 import ast
 import uuid
-import cPickle as pickle
+import pickle
 import base64
 
 
@@ -40,6 +40,8 @@ def run_experiment(argv):
                              '(all iterations will be saved), "last" (only '
                              'the last iteration will be saved), or "none" '
                              '(do not save snapshots)')
+    parser.add_argument('--snapshot_gap', type=int, default=1,
+                        help='Gap between snapshot iterations.')
     parser.add_argument('--tabular_log_file', type=str, default='progress.csv',
                         help='Name of the tabular log file (in csv).')
     parser.add_argument('--text_log_file', type=str, default='debug.log',
@@ -54,15 +56,21 @@ def run_experiment(argv):
                         help='Random seed for numpy')
     parser.add_argument('--args_data', type=str,
                         help='Pickled data for stub objects')
+    parser.add_argument('--use_cloudpickle', type=ast.literal_eval, default=False,
+                        help='Whether to plot the iteration results')
 
     args = parser.parse_args(argv[1:])
 
-    from sandbox.vime.sampler import parallel_sampler_expl as parallel_sampler
-    parallel_sampler.initialize(n_parallel=args.n_parallel)
-
     if args.seed is not None:
         set_seed(args.seed)
-        parallel_sampler.set_seed(args.seed)
+
+    if args.n_parallel > 0:
+        from sandbox.vase.sampler import parallel_sampler_expl as parallel_sampler
+        parallel_sampler.initialize(n_parallel=args.n_parallel)
+
+        if args.seed is not None:
+            set_seed(args.seed)
+            parallel_sampler.set_seed(args.seed)
 
     if args.plot:
         from rllab.plotter import plotter
@@ -82,6 +90,7 @@ def run_experiment(argv):
     logger.add_tabular_output(tabular_log_file)
     prev_snapshot_dir = logger.get_snapshot_dir()
     prev_mode = logger.get_snapshot_mode()
+    logger.set_snapshot_gap(args.snapshot_gap)
     logger.set_snapshot_dir(log_dir)
     logger.set_snapshot_mode(args.snapshot_mode)
     logger.set_log_tabular_only(args.log_tabular_only)
