@@ -51,7 +51,7 @@ class CartpoleSwingupEnvX(Box2DEnv, Serializable):
                 yield 0
             else:
                 cs = np.cos(self.pole.angle)
-                if cs > 0.8:
+                if cs > 0.9:
                     rew = 1.0
                 else:
                     rew = 0.

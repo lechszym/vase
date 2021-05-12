@@ -55,7 +55,7 @@ class DoublePendulumEnvX(Box2DEnv, Serializable):
         tgt_pos = np.asarray([0, self.link_len * 2])
         cur_pos = self.get_tip_pos()
         dist = np.linalg.norm(cur_pos - tgt_pos)
-        if dist < 1:
+        if dist < 0.1:
             rew = 1.
         else:
             rew = 0.
