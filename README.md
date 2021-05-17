@@ -7,7 +7,7 @@ This code is based on [code](https://github.com/openai/vime) for Variational Inf
 To reproduce the results, you should first have [rllab](https://github.com/rllab/rllab) and Mujoco v1.31 configured. Then, run the following commands in the root folder of `rllab`:
 
 ```bash
-git submodule add -f git@github.com:lechszym/vase.git sandbox/vame
+git submodule add -f git@github.com:lechszym/vase.git sandbox/vase
 touch sandbox/__init__.py
 ```
 
