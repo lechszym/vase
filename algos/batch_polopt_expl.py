@@ -80,19 +80,6 @@ class SimpleReplayPool(object):
             next_observations=self._observations[transition_indices]
         )
 
-    def mean_obs_act(self):
-        if self._size >= self._max_pool_size:
-            obs = self._observations
-            act = self._actions
-        else:
-            obs = self._observations[:self._top + 1]
-            act = self._actions[:self._top + 1]
-        obs_mean = np.mean(obs, axis=0)
-        obs_std = np.std(obs, axis=0)
-        act_mean = np.mean(act, axis=0)
-        act_std = np.std(act, axis=0)
-        return obs_mean, obs_std, act_mean, act_std
-
     @property
     def size(self):
         return self._size
@@ -266,18 +253,16 @@ class BatchPolopt(RLAlgorithm):
                 # Now we train the dynamics model using the replay self.pool; only
                 # if self.pool is large enough.
                 if self.pool.size >= self.min_pool_size:
-                    obs_mean, obs_std, act_mean, act_std = self.pool.mean_obs_act()
                     _inputss = []
                     _targetss = []
                     for _ in range(self.n_updates_per_sample):
                         batch = self.pool.random_batch(
                             self.pool_batch_size)
-                        obs = (batch['observations'] - obs_mean) / \
-                            (obs_std + 1e-8)
-                        next_obs = (
-                            batch['next_observations'] - obs_mean) / (obs_std + 1e-8)
-                        act = (batch['actions'] - act_mean) / \
-                            (act_std + 1e-8)
+
+                        obs = batch['observations']
+                        next_obs = batch['next_observations']
+                        act = batch['actions']
+
                         _inputs = np.hstack(
                             [obs, act])
                         _targets = next_obs
@@ -356,19 +341,12 @@ class BatchPolopt(RLAlgorithm):
         cur_params = self.policy.get_param_values()
         cur_dynamics_params = self.bnn.get_param_values()
 
-        # Mean/std obs/act based on replay pool.
-        obs_mean, obs_std, act_mean, act_std = self.pool.mean_obs_act()
-
         paths = parallel_sampler.sample_paths(
             policy_params=cur_params,
             dynamics_params=cur_dynamics_params,
             max_samples=self.batch_size,
             max_path_length=self.max_path_length,
-            itr=itr,
-            obs_mean=obs_mean,
-            obs_std=obs_std,
-            act_mean=act_mean,
-            act_std=act_std
+            itr=itr
         )
         if self.whole_paths:
             return paths
