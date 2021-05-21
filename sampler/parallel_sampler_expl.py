@@ -52,7 +52,8 @@ def _worker_set_dynamics_params(G, params):
     G.dynamics.set_param_values(params)
 
 
-def _worker_collect_one_path(G, max_path_length, itr):
+def _worker_collect_one_path(G, max_path_length, itr,
+                             obs_mean, obs_std, act_mean, act_std):
     # Path rollout.
     path = rollout(G.env, G.policy, max_path_length)
 
@@ -62,13 +63,15 @@ def _worker_collect_one_path(G, max_path_length, itr):
     path['rewards_extrinsic'] = np.array(path['rewards'])
 
     if itr > 0:
-        # Iterate over all paths and compute intrinsic reward by variational
-        # assorted surprise
-        obs = path['observations']
-        act = path['actions']
+        # Iterate over all paths and compute intrinsic reward by updating the
+        # model on each observation, calculating the KL divergence of the new
+        # params to the old ones, and undoing this operation.
+        obs = (path['observations'] - obs_mean) / (obs_std + 1e-8)
+        act = (path['actions'] - act_mean) / (act_std + 1e-8)
 
         rew = path['rewards']
 
+        # inputs = (o,a), target = o'
         obs_nxt = np.vstack([obs[1:]])
         _inputs = np.hstack([obs[:-1], act[:-1]])
         _targets = obs_nxt
@@ -89,7 +92,11 @@ def sample_paths(
         dynamics_params,
         max_samples,
         max_path_length=np.inf,
-        itr=None
+        itr=None,
+        obs_mean=None,
+        obs_std=None,
+        act_mean=None,
+        act_std=None
 ):
     """
     :param policy_params: parameters for the policy. This will be updated on each worker process
@@ -114,7 +121,7 @@ def sample_paths(
     return singleton_pool.run_collect(
         _worker_collect_one_path,
         threshold=max_samples,
-        args=(max_path_length, itr),
+        args=(max_path_length, itr, obs_mean, obs_std, act_mean, act_std),
         show_prog_bar=True
     )
 
