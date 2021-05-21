@@ -19,26 +19,16 @@ import plotly.graph_objs as go
 
 # Taken from plot.ly
 color_defaults = [
-    '#1163D3',
-    '#FEC20C',
-    '#E66100',
-    '#5D399B',
-    #'#4678A8',
-    #'#D5C460',
-    #'#2F9646',
-    #'#B94E89',
-    #'#7BD5F0',
-    #'#1f77b4',  # muted blue
-    #'#ff7f0e',  # safety orange
-    #'#2ca02c',  # cooked asparagus green
-    #'#d62728',  # brick red
-    #'#9467bd',  # muted purple
-    #'#8c564b',  # chestnut brown
-    #'#e377c2',  # raspberry yogurt pink
+    '#1163D3',  # blue
+    '#FEC20C',  # orange
+    '#E66100',  # red
+    '#5D399B',  # purple
     '#7f7f7f',  # middle gray
     '#bcbd22',  # curry yellow-green
     '#17becf'  # blue-teal
 ]
+
+
 
 def sliding_mean(data_array, window=5):
     data_array = np.array(data_array)
@@ -62,7 +52,6 @@ app = flask.Flask(__name__, static_url_path='/static')
 exps_data = None
 plottable_keys = None
 distinct_params = None
-
 
 @app.route('/js/<path:path>')
 def send_js(path):
@@ -200,53 +189,16 @@ def make_plot_eps(plot_list, use_median=False, counter=0, plot_key=""):
             y = list(plt.means)
             y_upper = list(plt.means + plt.stds)
             y_lower = list(plt.means - plt.stds)
-        #plt.legend = plt.legend.replace('rllab.algos.trpo.TRPO', 'TRPO')
-        #plt.legend = plt.legend.replace('rllab.algos.vpg.VPG', 'REINFORCE')
-        #plt.legend = plt.legend.replace('rllab.algos.erwr.ERWR', 'ERWR')
-        #plt.legend = plt.legend.replace('sandbox.rein.algos.trpo_vime.TRPO', 'TRPO+VIME')
-        #plt.legend = plt.legend.replace('sandbox.rein.algos.vpg_vime.VPG', 'REINFORCE+VIME')
-        #plt.legend = plt.legend.replace('sandbox.rein.algos.erwr_vime.ERWR', 'ERWR+VIME')
-        #plt.legend = plt.legend.replace('0.0001', '1e-4')
-        #         plt.legend = plt.legend.replace('0.001', 'TRPO+VIME')
-        #         plt.legend = plt.legend.replace('0', 'TRPO')
-        #         plt.legend = plt.legend.replace('0.005', 'TRPO+L2')
-
-        #if idx == 0:
-        #    plt.legend = 'TRPO (0.0)'
-        #if idx == 1:
-        #    plt.legend = 'TRPO+VIME (103.7)'
-        #if idx == 2:
-        #    plt.legend = 'TRPO+L2 (0.0)'
 
         ax.fill_between(
             x, y_lower, y_upper, interpolate=True, facecolor=color, linewidth=0.0, alpha=0.3)
-        #if idx == 2:
-        #    ax.plot(x, y, color=color, label=plt.legend, linewidth=2.0, linestyle="--")
-        #else:
+
         ax.plot(x, y, color=color, label=plt.legend, linewidth=2.0)
         ax.grid(True)
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         loc = 'upper left'
-        #if counter == 1:
-        #    #             ax.set_xlim([0, 120])
-        #    ax.set_ylim([-3, 60])
-        #    #             ax.set_xlim([0, 80])
 
-        #    loc = 'upper left'
-        #elif counter == 2:
-        #    ax.set_ylim([-0.04, 0.4])
-
-            #             ax.set_ylim([-0.1, 0.4])
-        #    ax.set_xlim([0, 2000])
-        #    loc = 'upper left'
-        #elif counter == 3:
-        #    #             ax.set_xlim([0, 1000])
-        #    loc = 'lower right'
-        #elif counter == 4:
-            #             ax.set_xlim([0, 800])
-            #             ax.set_ylim([0, 2])
-        #    loc = 'lower right'
         leg = ax.legend(loc=loc, prop={'size': 12}, ncol=1)
         for legobj in leg.legendHandles:
             legobj.set_linewidth(5.0)
@@ -266,21 +218,19 @@ def make_plot_eps(plot_list, use_median=False, counter=0, plot_key=""):
         ax.set_xlabel('Iterations')
 
         import matplotlib.ticker as tick
-        #         ax.xaxis.set_major_formatter(tick.FuncFormatter(y_fmt))
-        _plt.savefig('tmp' + str(counter) + '.pdf', bbox_inches='tight')
+
+        if len(args.data_paths)==1:
+            eps_filename = args.data_paths[0].split('/')[-1]
+        else:
+            eps_filename = "tmp"
+
+        if not os.path.exists('figures'):
+            os.mkdir('figures')
+
+        _plt.savefig("figures/" + eps_filename + "_" + str(counter) + '.pdf', bbox_inches='tight')
 
 
 def summary_name(exp, selector=None):
-    # if selector is not None:
-    #     exclude_params = set([x[0] for x in selector._filters])
-    # else:
-    #     exclude_params = set()
-    # rest_params = set([x[0] for x in distinct_params]).difference(exclude_params)
-    # if len(rest_params) > 0:
-    #     name = ""
-    #     for k in rest_params:
-    #         name += "%s=%s;" % (k.split(".")[-1], str(exp.flat_params.get(k, "")).split(".")[-1])
-    #     return name
     return exp.params["exp_name"]
 
 
@@ -340,13 +290,25 @@ def get_plot_instruction(plot_key, split_key=None, group_key=None, filters=None,
                 vs = sorted([x.params["exp_name"] for x in split_selector.extract()])
                 group_selectors = [split_selector.where(group_key, v) for v in vs]
                 group_legends = [summary_name(x.extract()[0], split_selector) for x in group_selectors]
-        # group_selectors = [split_selector]
-        # group_legends = [split_legend]
-        #for i in range(group_legends):
-        #    group_legends[i].replace('rllab.algos.trpo.TRPO','TRPO')
-        #    group_legends[i].replace('sandbox.jachiam.algos.plus.trpo_plus.TRPO','TRPO+NLL')
-        #    group_legends[i].replace('sandbox.vase.algos.trpo_expl.TRPO','VASE')
-        #    group_legends[i].replace('sandbox.vime.algos.trpo_expl.TRPO','VIME')
+
+        #Place VASE plots at the end
+        group_selectors_pre = []
+        group_selectors_post = []
+        group_legends_pre = []
+        group_legends_post = []
+
+
+
+        for i,group_legend in enumerate(group_legends):
+          if group_legend == 'sandbox.vase.algos.trpo_expl.TRPO':
+              group_selectors_post.append(group_selectors[i])
+              group_legends_post.append(group_legend)
+          else:
+              group_selectors_pre.append(group_selectors[i])
+              group_legends_pre.append(group_legend)
+
+        group_selectors = group_selectors_pre + group_selectors_post
+        group_legends = group_legends_pre + group_legends_post
 
         to_plot = []
         for group_selector, group_legend in zip(group_selectors, group_legends):
@@ -386,7 +348,7 @@ def get_plot_instruction(plot_key, split_key=None, group_key=None, filters=None,
                             progresses = [
                                 exp.progress.get(plot_key, np.array([np.nan])) for exp in data
                             ]
-                            #                             progresses = [progress[:500] for progress in progresses ]
+
                             sizes = list(map(len, progresses))
                             max_size = max(sizes)
                             progresses = [
@@ -520,7 +482,6 @@ def get_plot_instruction(plot_key, split_key=None, group_key=None, filters=None,
 
         if len(to_plot) > 0 and not gen_eps:
             fig_title = "%s: %s" % (split_key, split_legend)
-            # plots.append("<h3>%s</h3>" % fig_title)
             plots.append(make_plot(
                 to_plot,
                 use_median=use_median, title=fig_title,
@@ -543,7 +504,6 @@ def parse_float_arg(args, key):
 
 @app.route("/plot_div")
 def plot_div():
-    #     reload_data()
     args = flask.request.args
     plot_key = args.get("plot_key")
     if plot_key is None:
@@ -558,9 +518,7 @@ def plot_div():
         split_key = None
     if len(group_key) == 0:
         group_key = None
-    # group_key = distinct_params[0][0]
-    # print split_key
-    # exp_filter = distinct_params[0]
+
     use_median = args.get("use_median", "") == 'True'
     gen_eps = args.get("eps", "") == 'True'
     only_show_best = args.get("only_show_best", "") == 'True'
@@ -609,11 +567,88 @@ def safer_eval(some_string):
         raise Exception("string to eval looks suspicious")
     return eval(some_string, {'__builtins__': {}})
 
+@app.route("/time")
+def time():
+    import matplotlib.pyplot as _plt
+
+    if "Time" in plottable_keys:
+        plot_key = "Time"
+    elif len(plottable_keys) > 0:
+        plot_key = plottable_keys[0]
+    else:
+        plot_key = None
+    if len(distinct_params) > 0:
+        group_key = distinct_params[0][0]
+    else:
+        group_key = None
+
+    group_names = []
+    group_data = {}
+
+    column_names = []
+
+
+    for exp_data in exps_data:
+        exp_name = exp_data['params']['log_dir']
+        exp_name = exp_name.split("/")
+        group_name = exp_name[-2]
+        column_name = exp_name[-1].split("_")[0]
+
+        if column_name == 'trpo' or column_name == 'trpo-vime':
+            continue
+
+        if group_name not in group_names:
+           group_names.append(group_name)
+           group_data[group_name] = {}
+
+        if column_name not in column_names:
+           column_names.append(column_name)
+
+        if column_name not in group_data[group_name]:
+           group_data[group_name][column_name] = []
+
+        t = exp_data['progress'][plot_key]
+        t = np.diff(t)
+        if len(group_data[group_name][column_name])>0 and len(t) < len(group_data[group_name][column_name][0]):
+            continue
+
+        group_data[group_name][column_name].append(t)
+
+
+    N = len(group_names)
+    x = np.arange(N)
+    mid = N/2
+    width = 1/(N+1)
+
+    fig, ax = _plt.subplots(figsize=(8, 5))
+
+    for j,column_name in enumerate(column_names):
+        gt_means = []
+        gt_stds = []
+        for i,group_name in enumerate(group_names):
+           t = np.stack(group_data[group_name][column_name])
+           gt_means.append(np.mean(t))
+           gt_stds.append(np.std(t))
+
+        rects = ax.bar(x+j*width-(mid-0.5)*width, gt_means,width,yerr=gt_stds,label=column_name,color=color_defaults[j])
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    #ax.set_ylabel('Scores')
+    #ax.set_title('Scores by group and gender')
+    ax.set_xticks(x)
+    ax.set_xticklabels(group_names)
+    ax.legend()
+
+    if not os.path.exists('figures'):
+        os.mkdir('figures')
+
+    _plt.savefig('figures/time.pdf', bbox_inches='tight')
+
+    return "\ndone"
+
+
 @app.route("/")
 def index():
-    # exp_folder_path = "data/s3/experiments/ppo-atari-3"
-    # _load_data(exp_folder_path)
-    # exp_json = json.dumps(exp_data)
     if "AverageReturn" in plottable_keys:
         plot_key = "AverageReturn"
     elif len(plottable_keys) > 0:
@@ -649,6 +684,8 @@ def reload_data():
 
 
 if __name__ == "__main__":
+    #global eps_filename
+
     parser = argparse.ArgumentParser()
     parser.add_argument("data_paths", type=str, nargs='*')
     parser.add_argument("--prefix",type=str,nargs='?',default="???")
@@ -667,6 +704,7 @@ if __name__ == "__main__":
             if os.path.isdir(path) and (subdirprefix in subdirname):
                 args.data_paths.append(path)
     print("Importing data from {path}...".format(path=args.data_paths))
+
     reload_data()
     # port = 5000
     # url = "http://0.0.0.0:{0}".format(port)
