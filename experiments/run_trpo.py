@@ -27,14 +27,12 @@ from rllab.misc.instrument import stub, run_experiment_lite
 
 stub(globals())
 
-def run_trpo(env):
-
-    nRuns = 20
+def run_trpo(env, nRuns=20, seed_base=0):
 
     now = datetime.datetime.now(dateutil.tz.tzlocal())
     timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
 
-    for seed in range(nRuns):
+    for seed in range(seed_base,nRuns):
 
         if env == 'mountaincar':
             mdp = MountainCarEnvX()
@@ -67,17 +65,12 @@ def run_trpo(env):
             max_path_length = 1000
             type = 'classic'
         else:
-            sys.stderr.write("Error! Environment '%s' not recognised\n" % params['env'])
+            sys.stderr.write("Error! Environment '%s' not recognised\n" % env)
             sys.exit(-1)
 
         if type == 'classic':
             step_size = 0.01
-
-            policy = GaussianMLPPolicy(
-                env_spec=mdp.spec,
-                hidden_sizes=(32,),
-                hidden_nonlinearity=NL.tanh
-            )
+            policy_hidden_sizes = (32,)
 
             baseline = GaussianMLPBaseline(
                 env_spec=mdp.spec,
@@ -90,16 +83,17 @@ def run_trpo(env):
             )
         else:
             step_size = 0.05
-
-            policy = GaussianMLPPolicy(
-                env_spec=mdp.spec,
-                hidden_sizes=(64, 32),
-                hidden_nonlinearity=NL.tanh
-            )
+            policy_hidden_sizes=(64, 32)
 
             baseline = LinearFeatureBaseline(
                 mdp.spec,
             )
+
+        policy = GaussianMLPPolicy(
+            env_spec=mdp.spec,
+            hidden_sizes=policy_hidden_sizes,
+            hidden_nonlinearity=NL.tanh
+        )
 
         algo = TRPO(
             env=mdp,
@@ -120,7 +114,7 @@ def run_trpo(env):
             algo.train(),
             exp_name=exp_name,
             log_dir=log_dir,
-            n_parallel=4,
+            n_parallel=0,
             snapshot_mode="last",
             seed=seed,
             mode="local"
@@ -132,7 +126,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default="mountaincar",
                         help='Name of the experiment: mountaincar, cartpole, doublependulum, halfcheetah, ant, or lunarlander.')
+    parser.add_argument('--runs', type=int, default=20,
+                        help='Number of times to run the experiment')
+    parser.add_argument('--seed', type=int, default=0,
+                        help='Starting seed for runs')
 
     args = parser.parse_args(sys.argv[1:])
 
-    run_trpo(args.env)
+    run_trpo(args.env, nRuns=args.runs, seed_base=args.seed)
