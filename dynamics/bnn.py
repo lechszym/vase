@@ -176,6 +176,7 @@ class BNN(LasagnePowered, Serializable):
                  prior_sd=0.5,
                  use_reverse_kl_reg=False,
                  reverse_kl_reg_factor=0.1,
+                 likelihood_sd=5.0,
                  learning_rate=0.0001,
                  ):
 
@@ -194,6 +195,7 @@ class BNN(LasagnePowered, Serializable):
         self.n_batches = n_batches
         self.use_reverse_kl_reg = use_reverse_kl_reg
         self.reverse_kl_reg_factor = reverse_kl_reg_factor
+        self.likelihood_sd = likelihood_sd
         self.learning_rate = learning_rate
 
         # Build network architecture.
@@ -212,8 +214,10 @@ class BNN(LasagnePowered, Serializable):
         return sum(l.kl_div_new_prior() for l in layers)
 
     # P(s'|s,a,delta)
-    def _log_prob_normal(self, input, mu=0.):
-        log_normal = - np.pi*T.sum(T.square(input - mu), axis=1)
+    def _log_prob_normal(self, input, mu=0., sigma=1.):
+        log_normal = - \
+                         T.log(sigma) - T.log(T.sqrt(2 * np.pi)) - \
+                     T.sum(T.square(input - mu), axis=1) / (2 * T.square(sigma))
         return log_normal
 
     def pred_sym(self, input):
@@ -227,7 +231,7 @@ class BNN(LasagnePowered, Serializable):
             prediction = self.pred_sym(input)
             # Calculate model likelihood log(P(D|w)).
             _log_p_D_given_w.append(self._log_prob_normal(
-                target, prediction))
+                target, prediction, self.likelihood_sd))
         log_p_D_given_w = sum(_log_p_D_given_w)
         return log_p_D_given_w
 
@@ -244,7 +248,7 @@ class BNN(LasagnePowered, Serializable):
         return kl / self.n_batches - T.sum(log_p_D_given_w) / self.n_samples
 
     def surprise(self, log_p_D_given_w):
-        return - log_p_D_given_w / self.n_samples
+        return - log_p_D_given_w / self.n_samples + np.log(1) - np.log(self.likelihood_sd) - np.log(np.sqrt(2 * np.pi))
 
     def build_network(self):
 
