@@ -125,6 +125,7 @@ class BatchPolopt(RLAlgorithm):
             eta=1.,
             snn_n_samples=10,
             prior_sd=0.5,
+            likelihood_sd = 5,
             use_reverse_kl_reg=False,
             reverse_kl_reg_factor=1e-3,
             use_replay_pool=True,
@@ -178,6 +179,7 @@ class BatchPolopt(RLAlgorithm):
         self.eta = eta
         self.snn_n_samples = snn_n_samples
         self.prior_sd = prior_sd
+        self.likelihood_sd = likelihood_sd
         self.use_reverse_kl_reg = use_reverse_kl_reg
         self.reverse_kl_reg_factor = reverse_kl_reg_factor
         self.use_replay_pool = use_replay_pool
@@ -223,6 +225,7 @@ class BatchPolopt(RLAlgorithm):
             batch_size=batch_size,
             n_samples=self.snn_n_samples,
             prior_sd=self.prior_sd,
+            likelihood_sd=self.likelihood_sd,
             use_reverse_kl_reg=self.use_reverse_kl_reg,
             reverse_kl_reg_factor=self.reverse_kl_reg_factor,
             learning_rate=self.unn_learning_rate

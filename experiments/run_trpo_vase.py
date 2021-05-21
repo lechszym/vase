@@ -27,7 +27,7 @@ from rllab.misc.instrument import stub, run_experiment_lite
 
 stub(globals())
 
-def run_trpo_vase(env,nRuns = 20,seed_base=0, sigma_m=0.5, ablation_mode=False):
+def run_trpo_vase(env,nRuns = 20,seed_base=0, sigma_c=0.5, ablation_mode=False):
 
     now = datetime.datetime.now(dateutil.tz.tzlocal())
     timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
@@ -115,7 +115,8 @@ def run_trpo_vase(env,nRuns = 20,seed_base=0, sigma_m=0.5, ablation_mode=False):
             step_size=step_size,
             eta=1e-4,
             snn_n_samples=10,
-            prior_sd=sigma_m,
+            prior_sd=0.5,
+            likelihood_sd=sigma_c,
             subsample_factor=1.0,
             use_replay_pool=True,
             replay_pool_size=replay_pool_size,
@@ -128,7 +129,7 @@ def run_trpo_vase(env,nRuns = 20,seed_base=0, sigma_m=0.5, ablation_mode=False):
         exp_name = "trpo-vase_%s_%04d" % (timestamp, seed + 1)
         if ablation_mode:
             cwd = os.getcwd()
-            log_dir = cwd + "/data/local/sigmas/" + env + ("/%.3f/" % sigma_m) + exp_name
+            log_dir = cwd + "/data/local/sigmas/" + env + ("/%.3f/" % sigma_c) + exp_name
         else:
             log_dir = config.LOG_DIR + "/local/" + env +  "/" + exp_name
 
@@ -154,10 +155,10 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=0,
                         help='Starting seed for runs')
     parser.add_argument('--sigma', type=float, default=0.5,
-                        help='Sigma_m value for VASE')
+                        help='Sigma_c value for VASE')
     parser.add_argument('--ablation', action='store_true',
                         help='Whether to run sigma ablation study')
 
     args = parser.parse_args(sys.argv[1:])
 
-    run_trpo_vase(args.env, nRuns=args.runs, seed_base=args.seed,  sigma_m=args.sigma, ablation_mode=args.ablation)
+    run_trpo_vase(args.env, nRuns=args.runs, seed_base=args.seed,  sigma_c=args.sigma, ablation_mode=args.ablation)
