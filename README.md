@@ -12,4 +12,4 @@ touch sandbox/__init__.py
 ```
 
 Then you can do the following:
-- Execute TRPO+VASE on the Mountain car environment via `python sandbox/vase/experiments/run_mountaincar_trpo_vase.py`.
+- Execute TRPO+VASE on the Mountain car environment via `python sandbox/vase/experiments/run_rpo_vase.py --env mountaincar`.
